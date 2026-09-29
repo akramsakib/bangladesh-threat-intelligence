@@ -42,7 +42,46 @@ jobs:
           SITE_URL: ${{ steps.pages.outputs.origin }}
         run: node tools/build.mjs
 
+      # On the 15-minute schedule most runs find nothing new. Compare the
+      # freshly built feed against the one already deployed and stop early
+      # when they match, so we keep the freshness without 96 pointless
+      # deploys a day. Push and manual runs always continue.
+      - name: Skip deploy when the feed has not changed
+        id: changed
+        if: github.event_name == 'schedule'
+        env:
+          SITE_URL: ${{ steps.pages.outputs.origin }}
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: |
+          set -uo pipefail
+          new_hash=$(node -e "
+            const f = require('./dist/api/feed.json');
+            const ids = (f.items || []).map(i => i.id || i.url || i.title).sort().join('\n');
+            console.log(require('crypto').createHash('sha256').update(ids).digest('hex'));
+          ")
+          live_url="${SITE_URL}${BASE_PATH}/api/feed.json"
+          if curl -fsSL --max-time 30 "$live_url" -o /tmp/live-feed.json; then
+            old_hash=$(node -e "
+              const f = require('/tmp/live-feed.json');
+              const ids = (f.items || []).map(i => i.id || i.url || i.title).sort().join('\n');
+              console.log(require('crypto').createHash('sha256').update(ids).digest('hex'));
+            " 2>/dev/null || echo 'unreadable')
+          else
+            echo "could not fetch $live_url - treating as changed"
+            old_hash='unreachable'
+          fi
+          echo "live: $old_hash"
+          echo "built: $new_hash"
+          if [ "$old_hash" = "$new_hash" ]; then
+            echo 'No new feed items - skipping deploy.'
+            echo 'skip=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Feed changed - continuing to deploy.'
+            echo 'skip=false' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Verify build output
+        if: steps.changed.outputs.skip != 'true'
         run: |
           set -e
           test -f dist/index.html
@@ -58,11 +97,16 @@ jobs:
           test "$actors" -ge 19
 
       - uses: actions/upload-pages-artifact@v3
+        if: steps.changed.outputs.skip != 'true'
         with:
           path: dist
 
+    outputs:
+      skip: ${{ steps.changed.outputs.skip }}
+
   deploy:
     needs: build
+    if: needs.build.outputs.skip != 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
