@@ -97,9 +97,22 @@ Because the build is base-aware (paths resolve against `document.baseURI`, the r
 deployment prefix), the identical `dist/` works at `user.github.io/repo/` or at a domain root with
 no reconfiguration.
 
+## Publishing
+
+First time only — creates the repo, pushes, enables Pages and waits for the deploy:
+
+```bash
+./tools/publish.sh          # prompts for a token; nothing is written to disk
+```
+
+The token needs the **`repo`** and **`workflow`** scopes (GitHub refuses any push
+containing `.github/workflows/` without the latter). It is held in a shell variable
+for the duration of the run, passed to git via an in-memory header, and never
+persisted to `.git/config`.
+
 ## Deploying
 
-Pushing to `main` is all that is required — the workflow calls `actions/configure-pages`, which
+After that, pushing to `main` is all that is required — the workflow calls `actions/configure-pages`, which
 supplies the repository path prefix and origin to the build, then uploads `dist/`.
 
 To host the **full** backend as well (live on-demand aggregation rather than a 6-hourly snapshot),
