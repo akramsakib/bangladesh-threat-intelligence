@@ -50,8 +50,19 @@ export const COUNTRY_COORDS = {
   'China':       { lat: 35.8,  lng: 104.2 },
   'Bangladesh':  { lat: 23.68, lng:  90.35 },
   'Russia':      { lat: 61.5,  lng: 105.3 },
+  'Israel':      { lat: 31.05, lng:  34.85 },
   'Unknown':     { lat:  2.0,  lng:  78.0 }   // rendered as "UNATTRIBUTED" over the Indian Ocean
 };
+
+/* Destinations struck FROM Bangladesh. Shares are Group-IB's measurement of
+   Mysterious Team Bangladesh's campaign volume over a single year; the
+   remainder was spread across countries the report did not break out, so it is
+   represented honestly as an unspecified bucket rather than invented targets. */
+export const OUTBOUND_TARGETS = [
+  { key: 'india',  label: 'India',  lat: 22.6,  lng: 78.9,  share: 34, note: '34% of MTB campaign volume — government, financial and transport targets' },
+  { key: 'israel', label: 'Israel', lat: 31.05, lng: 34.85, share: 18, note: '18% of MTB campaign volume' },
+  { key: 'other',  label: 'Other / unspecified', lat: 12.0, lng: 60.0, share: 48, note: 'Remaining 48% — countries not broken out in the source reporting' }
+];
 
 /* Bangladeshi target nodes used for the globe arcs (where the attacks land). */
 export const BD_NODES = [

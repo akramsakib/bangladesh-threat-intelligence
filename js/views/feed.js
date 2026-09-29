@@ -24,6 +24,8 @@ export async function renderFeed() {
   if (!state.items) {
     body.innerHTML = shell('<div class="panel"><div class="skel" style="margin-bottom:8px"></div><div class="skel" style="width:70%"></div></div>');
     await load();
+    lastFetch = Date.now();
+    startAutoRefresh();
   }
   paint();
 }
@@ -64,11 +66,52 @@ function ago(iso) {
   return h < 36 ? `${h} h ago` : `${Math.round(h / 24)} d ago`;
 }
 
+let timer = null, ticker = null, lastFetch = 0;
+
+const REFRESH_MS = 60000;   // re-check the snapshot every minute
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  timer = setInterval(async () => {
+    if (document.hidden) return;                 // don't burn cycles in a background tab
+    const before = state.items.length;
+    await load();
+    lastFetch = Date.now();
+    if (document.getElementById('feed-body')?.offsetParent !== null) paint();
+    if (state.items.length !== before) toastNew(state.items.length - before);
+  }, REFRESH_MS);
+  ticker = setInterval(updateTicker, 1000);      // live "updated Ns ago" counter
+}
+
+export function stopAutoRefresh() {
+  if (timer) clearInterval(timer);
+  if (ticker) clearInterval(ticker);
+  timer = ticker = null;
+}
+
+function updateTicker() {
+  const el = document.getElementById('feed-ticker');
+  if (!el || !lastFetch) return;
+  const s = Math.round((Date.now() - lastFetch) / 1000);
+  const next = Math.max(0, Math.round((REFRESH_MS - (Date.now() - lastFetch)) / 1000));
+  el.textContent = `checked ${s}s ago · next in ${next}s`;
+}
+
+function toastNew(n) {
+  if (n <= 0) return;
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = `${n} new item${n === 1 ? '' : 's'}`;
+  t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 2600);
+}
+
 function statusLine() {
   if (!state.live) return 'curated record only — aggregator unreachable';
-  if (state.mode === 'live') return '<span style="color:var(--green)">live aggregator online</span>';
+  const tick = '<span id="feed-ticker" class="mono" style="color:var(--text4)"></span>';
+  if (state.mode === 'live') return `<span class="pulse-dot"></span><span style="color:var(--green)">live aggregator</span> · ${tick}`;
   const when = ago(state.stamp);
-  return `<span style="color:var(--green)">snapshot</span> rebuilt${when ? ' ' + esc(when) : ''} · refreshed every 3 h`;
+  return `<span class="pulse-dot"></span><span style="color:var(--green)">auto-refreshing</span> · snapshot${when ? ' ' + esc(when) : ''} · rebuilt every 15 min<br>${tick}`;
 }
 
 function shell(inner) {

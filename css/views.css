@@ -224,3 +224,14 @@ table.matrix td.cell:hover { outline: 2px solid var(--accent); outline-offset: -
 
 /* prism — empty datum */
 .pr-kv dd.mut { color: var(--text4); font-style: italic; }
+
+/* live pulse next to the feed status line */
+.pulse-dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); margin-right: 6px; vertical-align: middle;
+  animation: pulse-fade 1.8s ease-in-out infinite;
+}
+@keyframes pulse-fade {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(62,207,142,.55); }
+  50%      { opacity: .45; box-shadow: 0 0 0 5px rgba(62,207,142,0); }
+}

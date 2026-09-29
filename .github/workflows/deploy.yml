@@ -3,10 +3,12 @@ name: Build and deploy to GitHub Pages
 on:
   push:
     branches: [main]
-  # Re-aggregate the intelligence feed four times a day so the deployed
-  # snapshot stays current without any server running.
+  # Re-aggregate the intelligence feed every 15 minutes. GitHub's documented
+  # floor is 5 minutes, but scheduled runs are queued best-effort and get
+  # delayed or dropped under load, so 15 is the shortest interval that is
+  # actually reliable. The sources themselves publish roughly once an hour.
   schedule:
-    - cron: '17 */6 * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
 
 permissions:

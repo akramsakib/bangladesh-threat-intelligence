@@ -607,6 +607,12 @@ export const GROUPS = [
     bd_status: 'outbound',
     sectors: ['Government', 'Banking & Finance', 'Transportation'],
     bd_targets: ['Bangladesh-origin actor — operates outbound; drives retaliatory targeting of BD assets'],
+    direction: 'outbound',
+    outbound_targets: [
+      ['India', 34, 'Government, financial and transport targets; named by DSCI among 150+ crews striking Indian critical infrastructure'],
+      ['Israel', 18, 'Government and media targets during regional escalations'],
+      ['Other / unspecified', 48, 'Remaining campaign volume, not broken out in the source reporting']
+    ],
     targets: ['India', 'Israel', 'Australia', 'Sweden', 'Netherlands', 'Senegal', 'Ethiopia'],
     description: 'A Bangladesh-origin hacktivist collective founded in 2020 by an actor using the handle "D4RK TSN", which Group-IB credited with 750+ DDoS attacks and 70+ website defacements in a single year, 34% of them against India and 18% against Israel, concentrated on government, financial and transport targets. Tradecraft is low-sophistication but high-tempo: short "test" DDoS bursts to gauge resistance, then full campaigns; opportunistic exploitation of vulnerable phpMyAdmin and WordPress installs and default admin credentials for defacement. It matters to Bangladeshi defenders for the second-order effect: DSCI\'s 2025 threat advisory names MTB among 150+ hacktivist groups striking Indian critical infrastructure, and each outbound wave has been followed by retaliatory defacement and DDoS against Bangladeshi government and bank websites. Listed here as an *outbound* actor — included for completeness of the national picture, not as a target set.',
     ttps: [
@@ -649,6 +655,10 @@ export const GROUPS = [
     bd_status: 'confirmed',
     sectors: ['Government', 'Banking & Finance', 'Healthcare', 'Education', 'Energy', 'Media'],
     bd_targets: ['gov.bd web estate', 'Banks and NBFIs', 'Hospital and university portals', 'State-owned enterprises'],
+    direction: 'bidirectional',
+    outbound_targets: [
+      ['India', 50, 'Bangladeshi crews deface Indian government, university and SME sites in retaliatory waves']
+    ],
     targets: ['Bangladesh', 'India'],
     description: 'A persistent tit-for-tat defacement and DDoS conflict between Indian and Bangladeshi crews, fuelled by nationalist and religious sentiment and coordinated largely in Telegram channels. BGD e-GOV CIRT has repeatedly issued date-anchored situational alerts — ahead of 15 August, around national holidays, and a July 2025 alert for CII, energy and banking warning of web application exploitation, defacement, credential compromise and DDoS. Bangladeshi reporting through 2023 documented waves against government sites, a state-owned investment company (100,000+ investor records claimed), and health and education portals. In May 2026 the national CERT attributed web defacement artefacts on Bangladeshi government infrastructure to a global Magento exploitation campaign — a reminder that "hacktivist" claims often ride on mass CMS/e-commerce exploitation rather than targeted intrusion.',
     ttps: [

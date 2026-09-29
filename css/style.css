@@ -385,3 +385,15 @@ body.light-mode .th-ico-moon { display: none; }
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
 }
+
+/* compact segmented control for the sidebar */
+.seg-sm { display: flex; gap: 3px; margin-bottom: 9px; }
+.seg-sm button {
+  flex: 1; padding: 5px 4px; font-family: var(--mono); font-size: 9.5px;
+  letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
+  background: var(--bg2); color: var(--text3);
+  border: 1px solid var(--border); border-radius: 6px;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.seg-sm button:hover { color: var(--text1); border-color: var(--border2); }
+.seg-sm button.on { background: var(--purple); color: #0b0f18; border-color: var(--purple); font-weight: 700; }

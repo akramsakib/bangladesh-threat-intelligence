@@ -5,7 +5,7 @@
    ========================================================================== */
 import { GROUPS } from '../data/actors.js';
 import { NATION_COLORS, MOTIVATION, STATUS, FRESHNESS, computeEdges, freshness, nationColor } from './config.js';
-import { initGlobe, updateGlobe, toggleArcs, focusActor } from './globe.js';
+import { initGlobe, updateGlobe, toggleArcs, setArcDirection, focusActor } from './globe.js';
 import { openDetail, closeDetail, toast } from './detail.js';
 import { renderCluster } from './views/cluster.js';
 import { renderDiamond } from './views/diamond.js';
@@ -215,6 +215,11 @@ function boot() {
       arcsOn = toggleArcs();
       $('arc-toggle').textContent = arcsOn ? 'Hide attack arcs' : 'Show attack arcs';
     });
+
+    document.querySelectorAll('#dir-seg button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('#dir-seg button').forEach(x => x.classList.toggle('on', x === b));
+      setArcDirection(b.dataset.dir);
+    }));
 
     const search = $('g-search');
     let t;

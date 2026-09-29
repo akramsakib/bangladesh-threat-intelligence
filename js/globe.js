@@ -6,7 +6,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { COUNTRY_COORDS, BD_NODES, nationColor, MOTIVATION, HOME } from './config.js';
+import { COUNTRY_COORDS, BD_NODES, OUTBOUND_TARGETS, nationColor, MOTIVATION, HOME } from './config.js';
 
 const R = 100;
 const ARC_PTS = 64;
@@ -16,6 +16,8 @@ let globeGroup, markerGroup, arcGroup, starField;
 let markers = [], arcs = [];
 let onSelect = null, hoverEl = null;
 let showArcs = true, animId = null;
+let arcDirection = 'both';           // 'in' | 'out' | 'both'
+const OUT_COLOR = 0xa87dff;          // BD-origin / outbound
 let allGroups = [];
 
 const deg = d => d * Math.PI / 180;
@@ -274,15 +276,47 @@ export function updateGlobe(groups) {
 
   markerGroup.add(makeLabel('DHAKA \u2014 HOME', HOME.lat + 6.5, HOME.lng - 9, '#4ade9f', 9.5));
 
+  /* --- inbound: origin country -> a Bangladeshi asset class --- */
   groups.forEach((g, gi) => {
-    if (g.bd_status === 'outbound') return;               // outbound actors don't strike BD
+    if (g.bd_status === 'outbound') return;            // purely outbound actors never strike BD
     const origin = COUNTRY_COORDS[g.country] || COUNTRY_COORDS.Unknown;
     const node = BD_NODES[gi % BD_NODES.length];
     const col = new THREE.Color(MOTIVATION[g.motivation]?.hex || '#4a9eff');
     const speed = 0.0026 + (g.bd_relevance / 100) * 0.004;
     const a = makeArc(origin.lat + (gi % 3) * 1.4, origin.lng + (gi % 4) * 1.6, node.lat, node.lng, col, speed);
-    a.visible = showArcs;
+    a.userData.dir = 'in';
+    a.visible = showArcs && arcDirection !== 'out';
     arcGroup.add(a); arcs.push(a);
+  });
+
+  /* --- outbound: Dhaka -> countries struck from Bangladesh --- */
+  const outActors = groups.filter(g => Array.isArray(g.outbound_targets) && g.outbound_targets.length);
+  const outTally = new Map();
+  outActors.forEach(g => g.outbound_targets.forEach(([name, share, note]) => {
+    const prev = outTally.get(name) || { share: 0, actors: [], contributions: [], note };
+    prev.share = share;                       // last writer; only shown when a single actor
+    prev.actors.push(g.name);
+    prev.contributions.push(`${g.name}: ${share}%`);
+    outTally.set(name, prev);
+  }));
+
+  outTally.forEach((info, name) => {
+    const dest = OUTBOUND_TARGETS.find(t => t.label === name)
+              || (COUNTRY_COORDS[name] ? { ...COUNTRY_COORDS[name], label: name } : null);
+    if (!dest) return;
+    const col = new THREE.Color(OUT_COLOR);
+    const speed = 0.0030 + (info.share / 100) * 0.004;
+    const a = makeArc(HOME.lat, HOME.lng, dest.lat, dest.lng, col, speed);
+    a.userData.dir = 'out';
+    a.userData.outbound = { name, ...info };
+    a.visible = showArcs && arcDirection !== 'in';
+    arcGroup.add(a); arcs.push(a);
+
+    const tag = info.actors.length > 1
+      ? `${info.actors.length} actors`
+      : `${info.share}%`;
+    markerGroup.add(makeLabel(`\u2192 ${name.toUpperCase()} ${tag}`,
+      dest.lat - 5.5, dest.lng, '#c4a6ff', 8));
   });
 
   renderLegend(groups);
@@ -295,17 +329,37 @@ function renderLegend(groups) {
   groups.forEach(g => { byStatus[g.bd_status] = (byStatus[g.bd_status] || 0) + 1; });
   const labels = { confirmed: 'Confirmed vs BD', assessed: 'Assessed exposure', regional: 'Regional spillover', outbound: 'BD-origin (outbound)' };
   const cols = { confirmed: '#f0544f', assessed: '#f5a623', regional: '#4a9eff', outbound: '#a87dff' };
+  const outCount = groups.filter(g => Array.isArray(g.outbound_targets) && g.outbound_targets.length).length;
   el.innerHTML =
     '<div class="gl-title">Targeting Bangladesh</div>' +
     Object.keys(labels).filter(k => byStatus[k]).map(k =>
       `<div class="ek-row"><span class="ek-dot" style="background:${cols[k]}"></span>${labels[k]}<span style="margin-left:auto;color:var(--text4)">${byStatus[k]}</span></div>`
     ).join('') +
-    `<div class="gl-note">Arcs run from actor origin to the Bangladeshi asset class most associated with their reporting. Marker size = BD exposure score.</div>`;
+    (outCount ? `<div class="ek-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+        <span class="ek-dot" style="background:#a87dff"></span>Outbound from Bangladesh<span style="margin-left:auto;color:var(--text4)">${outCount}</span></div>` : '') +
+    `<div class="gl-note">Inbound arcs run from actor origin to the Bangladeshi asset class most associated with their reporting. <b style="color:#c4a6ff">Violet arcs leave Dhaka</b> for targets struck from Bangladesh. Marker size = BD exposure score.</div>`;
+}
+
+export function setArcDirection(dir) {
+  arcDirection = dir;
+  arcs.forEach(a => {
+    a.visible = showArcs && (dir === 'both' || a.userData.dir === dir);
+  });
+  return arcDirection;
+}
+
+export function arcCounts() {
+  return {
+    in: arcs.filter(a => a.userData.dir === 'in').length,
+    out: arcs.filter(a => a.userData.dir === 'out').length
+  };
 }
 
 export function toggleArcs(force) {
   showArcs = typeof force === 'boolean' ? force : !showArcs;
-  arcs.forEach(a => { a.visible = showArcs; });
+  arcs.forEach(a => {
+    a.visible = showArcs && (arcDirection === 'both' || a.userData.dir === arcDirection);
+  });
   return showArcs;
 }
 

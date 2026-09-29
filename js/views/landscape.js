@@ -98,6 +98,34 @@ export function renderLandscape(groups, onSelect) {
       </div>
     </div>
 
+    ${(() => {
+      const out = groups.filter(g => Array.isArray(g.outbound_targets) && g.outbound_targets.length);
+      if (!out.length) return '';
+      return `<div class="panel" style="margin-bottom:14px;border-left:3px solid var(--purple)">
+        <div class="panel-t">Outbound from Bangladesh <span class="mut">attacks originating here, not aimed at here</span></div>
+        <div style="font-size:11.5px;color:var(--text3);line-height:1.7;margin-bottom:12px">
+          The national picture runs both ways. These actors operate <b>from</b> Bangladesh against external targets — recorded for completeness, and because each outbound wave has been followed by retaliatory defacement and DDoS against Bangladeshi government and bank websites.
+        </div>
+        ${out.map(g => `
+          <div style="margin-bottom:12px">
+            <div class="row" style="gap:8px;margin-bottom:5px">
+              <span class="dot" style="background:var(--purple)"></span>
+              <span style="font-weight:650;font-size:13px">${esc(g.name)}</span>
+              <span class="tag">${esc(g.direction || 'outbound')}</span>
+            </div>
+            ${g.outbound_targets.map(([name, share, note]) => `
+              <div style="margin-bottom:6px;padding-left:16px">
+                <div class="row" style="font-size:11.5px;margin-bottom:3px">
+                  <span>→ ${esc(name)}</span>
+                  <span class="mono muted" style="margin-left:auto">${share}%</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" style="width:${share}%;background:var(--purple)"></div></div>
+                <div class="mono" style="font-size:9.5px;color:var(--text4);margin-top:3px">${esc(note)}</div>
+              </div>`).join('')}
+          </div>`).join('')}
+      </div>`;
+    })()}
+
     <div class="grid2">
       <div class="panel">
         <div class="panel-t">Top threats to Bangladesh <span class="mut">by exposure score</span></div>
