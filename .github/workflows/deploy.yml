@@ -1,0 +1,70 @@
+name: Build and deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Re-aggregate the intelligence feed four times a day so the deployed
+  # snapshot stays current without any server running.
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deploys at once; let a scheduled refresh finish rather than
+# cancelling it halfway through feed aggregation.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build static site
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          SITE_URL: ${{ steps.pages.outputs.origin }}
+        run: node tools/build.mjs
+
+      - name: Verify build output
+        run: |
+          set -e
+          test -f dist/index.html
+          test -f dist/404.html
+          test -f dist/api/stix.json
+          test -f dist/api/actors.json
+          test -f dist/api/feed.json
+          objects=$(node -e "console.log(require('./dist/api/stix.json').objects.length)")
+          actors=$(node -e "console.log(require('./dist/api/actors.json').count)")
+          items=$(node -e "console.log(require('./dist/api/feed.json').total)")
+          echo "STIX objects: $objects | actors: $actors | feed items: $items"
+          test "$objects" -gt 400
+          test "$actors" -ge 19
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

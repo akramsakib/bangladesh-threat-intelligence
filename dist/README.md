@@ -6,13 +6,8 @@ and a zero-dependency Node edge service — but with the corpus, geography, exec
 centred entirely on threats to Bangladesh.
 
 ```bash
-npm start                # full app on http://localhost:3000  (Node >= 20, zero dependencies)
-npm run build            # static build into dist/
-npm run preview          # build + serve dist/ exactly as GitHub Pages would
+node server.mjs          # http://localhost:3000  (Node >= 20, no npm install needed)
 ```
-
-**Live site:** deployed to GitHub Pages by `.github/workflows/deploy.yml` on every push,
-and rebuilt on a 6-hourly cron so the intelligence feed stays current.
 
 ---
 
@@ -74,38 +69,6 @@ each view is a lens over one filtered set. `⌘K` opens spotlight; `1`–`7` swi
 The STIX bundle is generated from the same corpus the UI reads, with deterministic UUIDv5-style ids, so it is
 stable across restarts and safe to poll.
 
-## Two runtimes, one codebase
-
-The app detects at boot whether a Node backend is answering and adapts. Nothing is stubbed out
-and no feature is faked — the static deployment keeps every capability except on-demand
-re-aggregation, which becomes a scheduled rebuild instead.
-
-| Capability | `npm start` (Node) | GitHub Pages (static) |
-|---|---|---|
-| Globe, cluster, diamond, brief, hunt | Full | Full — pure client-side already |
-| Intelligence feed | Aggregated on request, 15-min cache | Snapshot in `api/feed.json`, rebuilt every 6 h by Action |
-| IOC enrichment (Prism) | Server-side via `/api/enrich` | **Runs in the browser** — all six providers send `Access-Control-Allow-Origin: *` |
-| STIX 2.1 / TAXII | Generated per request, ETag-cached | Pre-generated `api/stix.json` + TAXII-shaped path aliases |
-| Deep links, back button | History API | Same, via `404.html` fallback and a base-aware router |
-
-`js/lib/api.js` is the single switch: it probes `api/health`, caches the verdict for the session,
-and every view calls it rather than `fetch` directly. `js/lib/enrich.js` is genuinely isomorphic —
-`server.mjs` imports the same module the browser does, so both runtimes produce identical verdicts
-from identical logic.
-
-Because the build is base-aware (paths resolve against `document.baseURI`, the router strips the
-deployment prefix), the identical `dist/` works at `user.github.io/repo/` or at a domain root with
-no reconfiguration.
-
-## Deploying
-
-Pushing to `main` is all that is required — the workflow calls `actions/configure-pages`, which
-supplies the repository path prefix and origin to the build, then uploads `dist/`.
-
-To host the **full** backend as well (live on-demand aggregation rather than a 6-hourly snapshot),
-`server.mjs` runs as-is on any Node host — `npm start`, port from `$PORT`, no dependencies, no build
-step. Point it at the same repo and the frontend will detect the live API and switch itself over.
-
 ## Design notes
 
 Same token system and shell geometry as the original — 56px topbar, 222px filter rail, 480px detail drawer,
@@ -125,12 +88,7 @@ Four flaws found in the original teardown are fixed here:
 
 ```
 index.html            app shell — topbar, filter rail, 7 panels, detail drawer, spotlight
-server.mjs            static serving + API surface (imports the shared engines)
-tools/feed.mjs        RSS aggregation + Bangladesh relevance scoring
-tools/stix.mjs        STIX 2.1 bundle generation
-tools/build.mjs       static build for GitHub Pages
-tools/pages-sim.mjs   local GitHub Pages simulator (prefix + 404 behaviour)
-.github/workflows/    build, verify and deploy; 6-hourly feed refresh
+server.mjs            static serving + feed aggregation + enrichment + STIX/TAXII
 css/style.css         tokens, shell, drawer, spotlight
 css/views.css         per-view components
 data/actors.js        GROUPS (19 dossiers) · INCIDENTS (19) · SECTORS (10)
@@ -139,8 +97,7 @@ js/app.js             boot, filters, router, theme, spotlight, keyboard
 js/config.js          palettes, geography, BD asset nodes, freshness, computeEdges()
 js/globe.js           three.js scene
 js/detail.js          dossier drawer
-js/lib/               security.js (escaping) · router.js (base-aware) ·
-                      api.js (runtime switch) · enrich.js (isomorphic engine)
+js/lib/               security.js (escaping, safe URLs) · router.js
 js/views/             cluster · diamond · landscape · feed · hunt · prism
 vendor/               three 0.160.0, OrbitControls, d3 7.9.0 — pinned, self-hosted
 ```

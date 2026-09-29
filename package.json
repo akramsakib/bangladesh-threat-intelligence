@@ -1,14 +1,33 @@
 {
-  "name": "threatnexus-bd",
+  "name": "bangladesh-threat-intelligence",
   "version": "1.0.0",
-  "description": "Bangladesh-focused cyber threat intelligence console — actor dossiers, national incident record, sector exposure, live feed, hunt packs, IOC enrichment and a STIX 2.1 / TAXII 2.1 feed.",
+  "description": "Bangladesh-focused cyber threat intelligence console \u2014 actor dossiers, national incident record, sector exposure, live feed, hunt packs, IOC enrichment and a STIX 2.1 / TAXII 2.1 feed.",
   "type": "module",
   "private": true,
   "license": "CC-BY-4.0",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.mjs",
-    "dev": "node server.mjs"
+    "dev": "node server.mjs",
+    "build": "node tools/build.mjs",
+    "preview": "node tools/build.mjs && node tools/pages-sim.mjs",
+    "stix": "node -e \"import('./tools/stix.mjs').then(m=>console.log(JSON.stringify(m.stixBundle(),null,2)))\""
   },
-  "dependencies": {}
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OWNER/bangladesh-threat-intelligence.git"
+  },
+  "keywords": [
+    "threat-intelligence",
+    "bangladesh",
+    "cti",
+    "mitre-attack",
+    "stix",
+    "taxii",
+    "apt",
+    "osint"
+  ]
 }
