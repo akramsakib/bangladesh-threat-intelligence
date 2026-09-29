@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>/</loc><priority>1.0</priority></url>
+  <url><loc>/globe</loc><priority>0.9</priority></url>
+  <url><loc>/cluster</loc><priority>0.8</priority></url>
+  <url><loc>/diamond</loc><priority>0.8</priority></url>
+  <url><loc>/threat-landscape</loc><priority>0.9</priority></url>
+  <url><loc>/feed</loc><priority>0.7</priority></url>
+  <url><loc>/hunt</loc><priority>0.9</priority></url>
+  <url><loc>/prism</loc><priority>0.8</priority></url>
+</urlset>
