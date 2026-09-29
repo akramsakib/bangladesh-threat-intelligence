@@ -111,7 +111,7 @@ function statusLine() {
   const tick = '<span id="feed-ticker" class="mono" style="color:var(--text4)"></span>';
   if (state.mode === 'live') return `<span class="pulse-dot"></span><span style="color:var(--green)">live aggregator</span> · ${tick}`;
   const when = ago(state.stamp);
-  return `<span class="pulse-dot"></span><span style="color:var(--green)">auto-refreshing</span> · snapshot${when ? ' ' + esc(when) : ''} · rebuilt every 15 min<br>${tick}`;
+  return `<span class="pulse-dot"></span><span style="color:var(--green)">auto-refreshing</span> · snapshot${when ? ' ' + esc(when) : ''} · rebuilt when sources publish<br>${tick}`;
 }
 
 function shell(inner) {
