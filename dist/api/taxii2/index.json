@@ -1,1 +1,0 @@
-{"title":"ThreatNexus BD TAXII Server (static mirror)","description":"Read-only STIX 2.1 objects for Bangladesh-relevant threat intelligence.","default":"/bangladesh-threat-intelligence/api/taxii2/root/collections/bd/objects/","x_license":"CC-BY-4.0","x_tlp":"TLP:CLEAR"}
