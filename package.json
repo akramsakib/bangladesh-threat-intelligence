@@ -18,7 +18,7 @@
   "dependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OWNER/bangladesh-threat-intelligence.git"
+    "url": "git+https://github.com/akramsakib/bangladesh-threat-intelligence.git"
   },
   "keywords": [
     "threat-intelligence",
@@ -29,5 +29,9 @@
     "taxii",
     "apt",
     "osint"
-  ]
+  ],
+  "homepage": "https://akramsakib.github.io/bangladesh-threat-intelligence/",
+  "bugs": {
+    "url": "https://github.com/akramsakib/bangladesh-threat-intelligence/issues"
+  }
 }
