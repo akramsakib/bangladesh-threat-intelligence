@@ -397,3 +397,50 @@ body.light-mode .th-ico-moon { display: none; }
 }
 .seg-sm button:hover { color: var(--text1); border-color: var(--border2); }
 .seg-sm button.on { background: var(--purple); color: #0b0f18; border-color: var(--purple); font-weight: 700; }
+
+/* ---------------------------------------------------------------- globe hero
+   Scale-at-a-glance bar. Numbers are counted from the corpus at render time,
+   never hardcoded, so they cannot drift away from the data. */
+.globe-hero {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 26px; align-items: center;
+  padding: 9px 20px; border-radius: 10px;
+  background: rgba(10,12,18,.72); border: 1px solid var(--border);
+  backdrop-filter: blur(9px); pointer-events: none; z-index: 6;
+}
+.gh-stat { text-align: center; }
+.gh-num { font-family: var(--mono); font-size: 19px; font-weight: 700; line-height: 1.1; }
+.gh-lab { font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text4); margin-top: 3px; }
+.gh-sep { width: 1px; height: 26px; background: var(--border2); }
+
+/* ------------------------------------------------------------ campaign timeline
+   The one component genuinely worth taking from the vendor maps: a trend strip.
+   Theirs plots scanning noise; this plots dated, cited campaigns. */
+.globe-timeline {
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  width: min(620px, 62%); padding: 10px 14px 12px; border-radius: 10px;
+  background: rgba(10,12,18,.76); border: 1px solid var(--border);
+  backdrop-filter: blur(9px); z-index: 6;
+}
+.gt-head { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+.gt-title { font-family: var(--mono); font-size: 8.5px; letter-spacing: .12em; color: var(--text4); }
+.gt-year { font-size: 10px; color: var(--accent); margin-left: auto; font-weight: 700; }
+.gt-play, .gt-reset {
+  background: var(--bg3); border: 1px solid var(--border2); color: var(--text2);
+  border-radius: 5px; cursor: pointer; font-family: var(--mono);
+}
+.gt-play { width: 22px; height: 22px; font-size: 9px; line-height: 1; }
+.gt-reset { font-size: 8.5px; padding: 3px 7px; }
+.gt-play:hover, .gt-reset:hover { border-color: var(--accent); color: var(--accent); }
+.gt-bars { display: flex; align-items: flex-end; gap: 3px; height: 58px; }
+.gt-bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
+  align-items: center; gap: 3px; cursor: pointer; height: 100%; }
+.gt-fill { width: 100%; border-radius: 2px 2px 0 0; background: var(--text4);
+  transition: background .18s var(--ease-out), opacity .18s; min-height: 2px; }
+.gt-bar:hover .gt-fill { background: var(--accent); }
+.gt-bar.on .gt-fill { background: var(--accent); }
+.gt-bar.dim .gt-fill { opacity: .28; }
+.gt-yr { font-family: var(--mono); font-size: 7.5px; color: var(--text4); }
+.gt-bar.on .gt-yr { color: var(--accent); }
+@media (max-width: 900px) { .globe-timeline, .globe-hero { display: none; } }

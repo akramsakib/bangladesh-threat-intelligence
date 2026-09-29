@@ -15,8 +15,10 @@ import { renderHunt } from './views/hunt.js';
 import { renderPrism, lookup as prismLookup } from './views/prism.js';
 import { viewForPath, pathForView, BASE } from './lib/router.js';
 import { esc } from './lib/security.js';
+import { renderHero, initTimeline, activeInYear } from './globe-hud.js';
 
 const ALL = GROUPS.slice();
+let fYear = null;   // campaign-year filter driven by the globe timeline
 const EDGES = computeEdges(ALL);
 
 let currentView = 'globe';
@@ -80,6 +82,7 @@ function applyFilters() {
     if (fCountry && g.country !== fCountry) return false;
     if (fMot && g.motivation !== fMot) return false;
     if (fStatus && g.bd_status !== fStatus) return false;
+    if (fYear !== null && !activeInYear(g, fYear)) return false;
     if (needle) {
       const hay = [g.name, g.apt, g.aka, g.country, g.description,
         ...(g.malware || []).map(m => m[0]), ...(g.cves || []),
@@ -89,13 +92,14 @@ function applyFilters() {
     }
     return true;
   });
-  const active = fCountry || fMot || fStatus || needle;
+  const active = fCountry || fMot || fStatus || needle || fYear !== null;
   $('filter-count').textContent = active ? `${visible.length}/${ALL.length}` : '';
 }
 
 function refresh() {
   applyFilters();
   updateGlobe(visible);
+  renderHero(visible, ALL, fYear);
   renderCurrentView();
 }
 
@@ -232,6 +236,8 @@ function boot() {
 
     applyFilters();
     initGlobe(visible, g => { openDetail(g); focusActor(g); });
+    renderHero(visible, ALL);
+    initTimeline(ALL, year => { fYear = year; refresh(); });
     $('globe-loading').style.display = 'none';
 
     const initial = viewForPath(location.pathname) || 'globe';

@@ -186,7 +186,23 @@
         <div id="globe-loading"><div class="boot-card"><div class="spin"></div><div class="load-txt">Loading Bangladesh threat data…</div></div></div>
         <canvas id="globe-canvas"></canvas>
         <div id="g-tooltip"></div>
+
+        <!-- Hero stat bar: Check Point's big-number treatment, but every figure
+             is countable from the corpus rather than a telemetry estimate. -->
+        <div class="globe-hero" id="globe-hero"></div>
+
         <div class="globe-legend" id="globe-legend"></div>
+
+        <!-- Campaign timeline: 38 dated, sourced campaigns 2013-2026 -->
+        <div class="globe-timeline" id="globe-timeline">
+          <div class="gt-head">
+            <button class="gt-play" id="gt-play" title="Play through the campaign record">▶</button>
+            <span class="gt-title">CAMPAIGN RECORD</span>
+            <span class="gt-year mono" id="gt-year">ALL YEARS</span>
+            <button class="gt-reset" id="gt-reset">reset</button>
+          </div>
+          <div class="gt-bars" id="gt-bars"></div>
+        </div>
         <div class="globe-hint">
           <span class="gh-row"><span class="gh-key">DRAG</span>rotate</span>
           <span class="gh-row"><span class="gh-key">SCROLL</span>zoom</span>
