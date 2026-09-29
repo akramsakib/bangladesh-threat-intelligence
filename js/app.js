@@ -12,6 +12,7 @@ import { renderDiamond } from './views/diamond.js';
 import { renderLandscape } from './views/landscape.js';
 import { renderFeed } from './views/feed.js';
 import { renderHunt } from './views/hunt.js';
+import { renderAttack } from './views/attack.js';
 import { renderPrism, lookup as prismLookup } from './views/prism.js';
 import { viewForPath, pathForView, BASE } from './lib/router.js';
 import { esc } from './lib/security.js';
@@ -114,6 +115,7 @@ function renderCurrentView() {
   if (currentView === 'landscape') renderLandscape(visible, sel);
   if (currentView === 'feed') renderFeed();
   if (currentView === 'hunt') renderHunt(visible, sel);
+  if (currentView === 'attack') renderAttack(visible, sel);
   if (currentView === 'prism') renderPrism();
 }
 

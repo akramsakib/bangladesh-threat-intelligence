@@ -82,6 +82,40 @@ async function main() {
   bundle.objects.forEach(o => { counts[o.type] = (counts[o.type] || 0) + 1; });
   log(`wrote   api/stix.json — ${bundle.objects.length} objects`, JSON.stringify(counts));
 
+  // ATT&CK Navigator layer, emitted statically so analysts can curl it straight
+  // into their own Navigator instance without loading the console.
+  {
+    const map = new Map();
+    for (const g of GROUPS) for (const [id, name, tactic] of (g.ttps || [])) {
+      if (!id) continue;
+      if (!map.has(id)) map.set(id, { id, name, tactic, actors: [] });
+      const e = map.get(id);
+      if (!e.actors.includes(g.name)) e.actors.push(g.name);
+    }
+    const techniques = [...map.values()];
+    const max = Math.max(1, ...techniques.map(t => t.actors.length));
+    const layer = {
+      name: 'ThreatNexus BD — Bangladesh-relevant ATT&CK coverage',
+      versions: { attack: '15', navigator: '4.9.0', layer: '4.5' },
+      domain: 'enterprise-attack',
+      description: `Techniques reported against Bangladeshi targets across ${GROUPS.length} tracked actors. ` +
+        'Score = number of actors in this corpus reported using the technique, not global prevalence.',
+      sorting: 3,
+      layout: { layout: 'side', showID: true, showName: true },
+      hideDisabled: false,
+      techniques: techniques.map(t => ({
+        techniqueID: t.id, score: t.actors.length,
+        comment: t.actors.join(', '), enabled: true
+      })),
+      gradient: { colors: ['#2a1416', '#f0544f'], minValue: 0, maxValue: max },
+      showTacticRowBackground: true,
+      tacticRowBackground: '#12151c',
+      selectTechniquesAcrossTactics: true
+    };
+    await fs.writeFile(path.join(DIST, 'api', 'navigator-layer.json'), JSON.stringify(layer, null, 2));
+    log(`wrote   api/navigator-layer.json — ${techniques.length} techniques, max score ${max}`);
+  }
+
   // TAXII-shaped aliases so existing consumers keep working on static hosting
   const taxiiDir = path.join(DIST, 'api', 'taxii2', 'root', 'collections', 'bd', 'objects');
   await fs.mkdir(taxiiDir, { recursive: true });

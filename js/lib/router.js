@@ -11,6 +11,7 @@ const ROUTES = [
   { path: '/threat-landscape', view: 'landscape', aliases: ['/brief', '/landscape'] },
   { path: '/feed',             view: 'feed' },
   { path: '/hunt',             view: 'hunt' },
+  { path: '/attack',           view: 'attack',    aliases: ['/attck', '/matrix'] },
   { path: '/prism',            view: 'prism',     aliases: ['/enrich'] }
 ];
 
