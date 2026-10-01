@@ -444,3 +444,19 @@ body.light-mode .th-ico-moon { display: none; }
 .gt-yr { font-family: var(--mono); font-size: 7.5px; color: var(--text4); }
 .gt-bar.on .gt-yr { color: var(--accent); }
 @media (max-width: 900px) { .globe-timeline, .globe-hero { display: none; } }
+
+/* About / author block — icon links, matching the upstream ThreatNexus treatment */
+.sb-author-links a {
+  padding: 4px 6px;
+  border-radius: 5px;
+  transition: color .15s, background .15s, padding-left .15s;
+}
+.sb-author-links a:hover {
+  background: var(--bg3);
+  color: var(--accent);
+  padding-left: 9px;
+  text-decoration: none;
+}
+.sb-author-links a svg { flex: 0 0 13px; opacity: .85; }
+.sb-author-links a:hover svg { opacity: 1; }
+.sb-author-meta strong { color: var(--text2); font-weight: 600; }
