@@ -65,6 +65,29 @@ function paint(d) {
   const out = document.getElementById('prism-out');
   const cls = d.verdict === 'MALICIOUS' ? 'malicious' : d.verdict === 'SUSPICIOUS' ? 'suspicious' : 'unknown';
 
+  // ---- source consensus -------------------------------------------------
+  // How many independent providers actually answered, and how many of them
+  // contributed a signal. Shown explicitly because a confident-looking verdict
+  // drawn from one responding source is weaker than the same verdict drawn
+  // from six, and the UI should not hide that difference.
+  const srcs = d.sources || [];
+  const answered = srcs.filter(x => x.ok);
+  const failed = srcs.filter(x => !x.ok);
+  const contributing = new Set((d.signals || []).map(x => x.source));
+  const corroboration = answered.filter(x => contributing.has(x.name)).length;
+
+  const pips = srcs.map(x => {
+    const state = !x.ok ? 'dead' : contributing.has(x.name) ? 'signal' : 'quiet';
+    const why = !x.ok ? 'no response' : contributing.has(x.name) ? 'contributed a signal' : 'answered, nothing notable';
+    return `<span class="pr-pip ${state}" title="${escAttr(x.name + ' — ' + why)}"></span>`;
+  }).join('');
+
+  const basis = corroboration === 0
+    ? 'No provider returned anything that moves the verdict.'
+    : corroboration === 1
+      ? 'One provider supplied the only contributing signal — treat as uncorroborated.'
+      : `${corroboration} independent providers contributed signals.`;
+
   out.innerHTML = `
     <div class="pr-verdict ${cls}">
       <div>
@@ -76,6 +99,16 @@ function paint(d) {
         <div style="font-size:12px;color:var(--text2);margin-top:4px">${esc(d.narrative || '')}</div>
       </div>
       <button class="btn-ghost" id="pr-copy">Copy report</button>
+    </div>
+
+    <div class="pr-consensus">
+      <div class="pr-con-row">
+        <span class="pr-con-lab">SOURCE CONSENSUS</span>
+        <span class="pr-pips">${pips}</span>
+        <span class="pr-con-n mono">${answered.length}/${srcs.length} answered</span>
+      </div>
+      <div class="pr-con-basis">${esc(basis)}</div>
+      ${failed.length ? `<div class="pr-con-fail mono">Silent: ${esc(failed.map(x => x.name).join(', '))} — a provider that did not answer is not a provider that found nothing.</div>` : ''}
     </div>
 
     ${(d.signals || []).length ? `<div class="panel" style="margin-bottom:12px">

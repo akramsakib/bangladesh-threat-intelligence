@@ -296,3 +296,30 @@ table.matrix td.cell:hover { outline: 2px solid var(--accent); outline-offset: -
 }
 .bluf-v { font-size: 13px; font-weight: 650; color: var(--text); line-height: 1.3; }
 .bluf-sub { font-family: var(--mono); font-size: 9px; color: var(--text4); margin-top: 4px; }
+
+/* ------------------------------------------------- Prism source consensus
+   A verdict backed by one responding provider is not the same as the same
+   verdict backed by six. The pip row makes that difference visible instead
+   of letting a single source look like agreement. */
+.pr-consensus {
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--bg2); padding: 10px 13px; margin-bottom: 12px;
+}
+.pr-con-row { display: flex; align-items: center; gap: 11px; }
+.pr-con-lab {
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .11em; color: var(--text4);
+}
+.pr-pips { display: flex; gap: 4px; }
+.pr-pip {
+  width: 15px; height: 6px; border-radius: 3px; background: var(--border3);
+  display: inline-block;
+}
+.pr-pip.signal { background: var(--red, #f0544f); }
+.pr-pip.quiet  { background: var(--text4); opacity: .55; }
+.pr-pip.dead   { background: transparent; border: 1px dashed var(--border3); }
+.pr-con-n { font-size: 9.5px; color: var(--text4); margin-left: auto; }
+.pr-con-basis { font-size: 11.5px; color: var(--text2); margin-top: 7px; line-height: 1.55; }
+.pr-con-fail {
+  font-size: 9.5px; color: var(--text4); margin-top: 5px;
+  padding-top: 5px; border-top: 1px solid var(--border); line-height: 1.5;
+}
