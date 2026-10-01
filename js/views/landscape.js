@@ -24,6 +24,39 @@ export function renderLandscape(groups, onSelect) {
   const incidents = INCIDENTS.filter(i => yearFilter === 'all' || i.date.startsWith(yearFilter))
     .slice().sort((a, b) => b.date.localeCompare(a.date));
 
+  // ---- BLUF -------------------------------------------------------------
+  // Bottom Line Up Front: the standard intelligence-briefing convention of
+  // leading with the judgement rather than the evidence. Every value below is
+  // derived from the corpus at render time, so the brief cannot assert a
+  // conclusion the underlying dossiers do not support.
+  const ttpCount = {};
+  groups.forEach(g => (g.ttps || []).forEach(([id, name]) => {
+    const k = id + '|' + name;
+    ttpCount[k] = (ttpCount[k] || 0) + 1;
+  }));
+  const topTtp = Object.entries(ttpCount).sort((a, b) => b[1] - a[1])[0];
+  const topTtpId = topTtp ? topTtp[0].split('|')[0] : '—';
+  const topTtpName = topTtp ? topTtp[0].split('|')[1] : '—';
+  const topTtpN = topTtp ? topTtp[1] : 0;
+
+  const topSector = [...(SECTORS || [])].sort((a, b) => (b.exposure || 0) - (a.exposure || 0))[0];
+  const topActor = top[0];
+  const liveActors = groups.filter(g => g.last_seen >= 2026).length;
+  const espionage = groups.filter(g => g.motivation === 'espionage').length;
+
+  const blufCells = [
+    ['Primary threat', topActor ? topActor.name : '—',
+     topActor ? `${topActor.country} · exposure ${topActor.bd_relevance}/100` : ''],
+    ['Dominant entry vector', `${topTtpId} ${topTtpName}`,
+     `${topTtpN} of ${groups.length} tracked actors`],
+    ['Most exposed sector', topSector ? topSector.name : '—',
+     topSector ? `exposure ${topSector.exposure}/100` : ''],
+    ['Active in 2026', `${liveActors} actors`,
+     `${confirmed.length} confirmed against BD targets`],
+    ['Dominant motivation', `Espionage`,
+     `${espionage} of ${groups.length} actors`]
+  ];
+
   body.innerHTML = `
     <div class="cond-banner">
       <span class="blip"></span>
@@ -33,6 +66,21 @@ export function renderLandscape(groups, onSelect) {
 
     <div class="v-head">
       <div class="v-title">Bangladesh Threat Intelligence Brief</div>
+
+    <div class="bluf">
+      <div class="bluf-line">
+        <span class="bluf-tag">BLUF</span>
+        <span>Bottom line up front &mdash; derived from the corpus, not asserted.</span>
+      </div>
+      <div class="bluf-grid">
+        ${blufCells.map(([k, v, sub]) => `
+          <div class="bluf-cell">
+            <div class="bluf-k">${esc(k)}</div>
+            <div class="bluf-v">${esc(v)}</div>
+            <div class="bluf-sub">${esc(sub)}</div>
+          </div>`).join('')}
+      </div>
+    </div>
       <div class="v-sub">National picture · ${esc(new Date().toLocaleString('en-GB', { month: 'long', year: 'numeric' }))} · compiled from BGD e-GOV CIRT advisories, vendor research and public incident reporting. TLP:CLEAR.</div>
     </div>
 
