@@ -8,6 +8,7 @@
      api/actors.json        actor index
      api/feed.json          aggregated feed snapshot   (refreshed by cron Action)
      api/feed-sources.json  per-source health snapshot
+     api/kev.json           CISA KEV cross-referenced vs the actor corpus (refreshed by cron Action)
      api/health.json        build metadata
 
    The browser bundle detects the absence of a live backend and switches to
@@ -25,6 +26,7 @@ import { GROUPS, INCIDENTS, SECTORS } from '../data/actors.js';
 import { BD_ADVISORIES } from '../data/advisories.js';
 import { stixBundle } from './stix.mjs';
 import { getFeed, SOURCES } from './feed.mjs';
+import { getKev } from './kev.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const DIST = path.join(ROOT, 'dist');
@@ -156,6 +158,17 @@ async function main() {
       sources: feed.sources, generated_at: new Date().toISOString()
     }));
     log(`wrote   api/feed.json — ${feedCount} items from ${healthy}/${SOURCES.length} sources`);
+  }
+
+  /* ----------------------------------------------------------------- kev */
+  if (process.env.SKIP_FEED === '1') {
+    log('skipped api/kev.json (SKIP_FEED=1)');
+    await fs.writeFile(path.join(DIST, 'api', 'kev.json'),
+      JSON.stringify({ ok: true, total_kev: 0, matched_count: 0, matched: [], unconfirmed: [], recent: [], generated_at: new Date().toISOString(), skipped: true }));
+  } else {
+    const kev = await getKev();
+    await fs.writeFile(path.join(DIST, 'api', 'kev.json'), JSON.stringify(kev));
+    log(`wrote   api/kev.json — ${kev.matched_count}/${kev.total_kev} KEV entries matched to tracked actors${kev.ok ? '' : ' (fetch failed: ' + kev.error + ')'}`);
   }
 
   /* ---------------------------------------------------------------- health */

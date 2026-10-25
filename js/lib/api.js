@@ -76,6 +76,16 @@ export async function getFeed(limit = 120) {
   };
 }
 
+/* ----------------------------------------------------- active exploitation */
+export async function getKev() {
+  const mode = await detectMode();
+  try {
+    return await getJSON(mode === 'live' ? 'api/kev' : 'api/kev.json', 20000);
+  } catch {
+    return { ok: false, total_kev: 0, matched_count: 0, matched: [], unconfirmed: [], recent: [], generated_at: null };
+  }
+}
+
 /* ---------------------------------------------------------------- enrichment */
 export async function getEnrichment(ioc) {
   const mode = await detectMode();

@@ -2,8 +2,10 @@
 import { esc, safeUrl } from '../lib/security.js';
 import { nationColor, MOTIVATION, STATUS } from '../config.js';
 import { INCIDENTS, SECTORS } from '../../data/actors.js';
+import { getKev } from '../lib/api.js';
 
 let yearFilter = 'all';
+let kevState = null; // null = not yet loaded; false = failed; object = data
 
 export function renderLandscape(groups, onSelect) {
   const body = document.getElementById('landscape-body');
@@ -83,6 +85,8 @@ export function renderLandscape(groups, onSelect) {
     </div>
       <div class="v-sub">National picture · ${esc(new Date().toLocaleString('en-GB', { month: 'long', year: 'numeric' }))} · compiled from BGD e-GOV CIRT advisories, vendor research and public incident reporting. TLP:CLEAR.</div>
     </div>
+
+    <div class="panel" id="kev-watch" style="margin-bottom:14px"></div>
 
     <div class="grid3" style="margin-bottom:14px">
       <div class="stat-card"><div class="lab">Tracked actors</div><div class="val">${groups.length}</div><div class="sub">${confirmed.length} confirmed against BD targets</div></div>
@@ -220,6 +224,150 @@ export function renderLandscape(groups, onSelect) {
     el.addEventListener('click', () => onSelect(groups.find(g => g.id === el.dataset.open))));
   body.querySelectorAll('#year-seg button').forEach(b =>
     b.addEventListener('click', () => { yearFilter = b.dataset.y; renderLandscape(groups, onSelect); }));
+
+  ensureKev(groups, onSelect);
+}
+
+/* ======================================================================
+   Active Exploitation Watch — CISA KEV cross-referenced against the actor
+   corpus. See tools/kev.mjs for the honest scope of this: a public
+   confirmed-exploitation feed plus "has a Bangladesh-tracked actor used
+   this CVE before", never a scan of live Bangladeshi infrastructure.
+   ====================================================================== */
+let kevData = null;      // null = not fetched yet; object once resolved
+let kevLoading = false;
+let kevTab = 'matched';
+
+async function ensureKev(groups, onSelect) {
+  paintKev(groups, onSelect);
+  if (kevData || kevLoading) return;
+  kevLoading = true;
+  try {
+    kevData = await getKev();
+  } catch {
+    kevData = { ok: false, total_kev: 0, matched_count: 0, matched: [], unconfirmed: [], recent: [], generated_at: null };
+  }
+  kevLoading = false;
+  paintKev(groups, onSelect);
+}
+
+function paintKev(groups, onSelect) {
+  const el = document.getElementById('kev-watch');
+  if (!el) return;
+
+  if (!kevData) {
+    el.innerHTML = `
+      <div class="panel-t">Active Exploitation Watch <span class="mut">live against CISA KEV</span></div>
+      <div class="skel" style="margin-top:10px"></div><div class="skel" style="width:55%"></div>`;
+    return;
+  }
+
+  if (!kevData.ok) {
+    el.innerHTML = `
+      <div class="panel-t">Active Exploitation Watch <span class="mut">live against CISA KEV</span></div>
+      <div class="mono muted" style="font-size:11px;margin-top:8px">CISA's catalog did not respond this check — showing no stale data rather than guessing. Retried automatically on next load.</div>`;
+    return;
+  }
+
+  const kevAge = kevData.generated_at ? ago(kevData.generated_at) : '';
+  const m = kevData.matched || [];
+  const u = kevData.unconfirmed || [];
+  const r = kevData.recent || [];
+  const ransomCount = m.filter(x => x.ransomware).length;
+
+  el.innerHTML = `
+    <div class="panel-t">
+      Active Exploitation Watch <span class="mut">CISA KEV cross-referenced against the corpus</span>
+    </div>
+    <div style="font-size:11.5px;color:var(--text3);line-height:1.6;margin:6px 0 12px">
+      Not a scan of Bangladeshi systems — a public confirmed-exploitation feed. The left panel is "a Bangladesh-tracked
+      actor is known to have used this exact CVE." The right panel is the newest confirmed exploitation anywhere, checked
+      against the curated BD advisory record for a named match.
+    </div>
+
+    <div class="grid3" style="margin-bottom:12px">
+      <div class="stat-card"><div class="lab">CISA KEV catalog</div><div class="val">${kevData.total_kev}</div><div class="sub">confirmed actively exploited, all time</div></div>
+      <div class="stat-card"><div class="lab">Matched to tracked actors</div><div class="val" style="color:var(--red)">${kevData.matched_count}</div><div class="sub">${ransomCount} tied to known ransomware use</div></div>
+      <div class="stat-card"><div class="lab">New in last 45 days</div><div class="val" style="color:var(--orange)">${r.length}</div><div class="sub">${kevAge ? 'catalog checked ' + esc(kevAge) : 'checked each build'}</div></div>
+    </div>
+
+    <div class="seg" id="kev-seg" style="margin-bottom:10px">
+      <button class="${kevTab === 'matched' ? 'on' : ''}" data-t="matched">Confirmed exploited — in KEV (${m.length})</button>
+      <button class="${kevTab === 'unconfirmed' ? 'on' : ''}" data-t="unconfirmed">Tracked, not yet in KEV (${u.length})</button>
+      <button class="${kevTab === 'recent' ? 'on' : ''}" data-t="recent">Newest in KEV (${r.length})</button>
+    </div>
+
+    <div id="kev-pane">${kevTab === 'matched' ? kevMatchedHtml(m) : kevTab === 'unconfirmed' ? kevUnconfirmedHtml(u) : kevRecentHtml(r)}</div>
+
+    <div class="mono" style="font-size:9.5px;color:var(--text4);line-height:1.8;margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+      Source: CISA Known Exploited Vulnerabilities catalog (cisa.gov). "Due date" is CISA's remediation deadline for
+      US federal agencies, shown for triage context only — Bangladeshi organisations running an affected product
+      should not wait for it. A CVE missing here means it is not yet confirmed exploited in the wild, not that it is safe.
+    </div>`;
+
+  el.querySelectorAll('#kev-seg button').forEach(b =>
+    b.addEventListener('click', () => { kevTab = b.dataset.t; paintKev(groups, onSelect); }));
+  el.querySelectorAll('[data-open]').forEach(a =>
+    a.addEventListener('click', () => onSelect(groups.find(g => g.id === a.dataset.open))));
+}
+
+function kevMatchedHtml(rows) {
+  if (!rows.length) return '<div class="pr-empty">No tracked-actor CVE currently appears in the CISA KEV catalog.</div>';
+  return rows.map(x => `
+    <div class="kev-row">
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <span class="mono" style="font-weight:650">${esc(x.cve)}</span>
+        <span class="tag">${esc(x.vendorProject)} · ${esc(x.product)}</span>
+        ${x.ransomware ? '<span class="pill crit">ransomware use confirmed</span>' : ''}
+        <span class="mono muted" style="margin-left:auto;font-size:10px">added to KEV ${esc(x.dateAdded)}</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--text3);margin:5px 0 6px">${esc(x.name)}</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        ${x.actors.map(a => `<span class="tag accent" data-open="${esc(a.id)}" style="cursor:pointer">${esc(a.name)} · ${esc(a.country)}${a.bd_status === 'confirmed' ? ' (confirmed vs BD)' : ''}</span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function kevUnconfirmedHtml(rows) {
+  if (!rows.length) return '<div class="pr-empty">Every CVE in the corpus is already confirmed in the CISA KEV catalog.</div>';
+  return `
+    <div style="font-size:11px;color:var(--text4);margin-bottom:8px">
+      These are real, cited vulnerabilities carried in the corpus against a tracked actor — CISA just has not (yet) logged
+      confirmed in-the-wild exploitation for them. Treat as "credibly dangerous", not "safe".
+    </div>
+    ${rows.map(x => `
+    <div class="kev-row">
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <span class="mono" style="font-weight:650">${esc(x.cve)}</span>
+        <span class="pill warn">not in CISA KEV</span>
+      </div>
+      <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">
+        ${x.actors.map(a => `<span class="tag accent" data-open="${esc(a.id)}" style="cursor:pointer">${esc(a.name)} · ${esc(a.country)}${a.bd_status === 'confirmed' ? ' (confirmed vs BD)' : ''}</span>`).join('')}
+      </div>
+    </div>`).join('')}`;
+}
+
+function kevRecentHtml(rows) {
+  if (!rows.length) return '<div class="pr-empty">No new CISA KEV entries in the last 45 days.</div>';
+  return rows.map(x => `
+    <div class="kev-row">
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <span class="mono" style="font-weight:650">${esc(x.cve)}</span>
+        <span class="tag">${esc(x.vendorProject)} · ${esc(x.product)}</span>
+        ${x.ransomware ? '<span class="pill crit">ransomware use confirmed</span>' : ''}
+        <span class="mono muted" style="margin-left:auto;font-size:10px">added ${esc(x.dateAdded)}</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--text3);margin:5px 0 4px">${esc(x.name)}</div>
+      ${x.advisory ? `<div class="mono" style="font-size:10px;color:var(--orange)">⚠ "${esc(x.advisory.term)}" named in a curated BD advisory — <a href="${esc(safeUrl(x.advisory.url))}" target="_blank" rel="noopener">${esc(x.advisory.title)}</a> (${esc(x.advisory.date)})</div>` : ''}
+    </div>`).join('');
+}
+
+function ago(iso) {
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (!isFinite(mins)) return '';
+  if (mins < 90) return `${Math.max(1, mins)} min ago`;
+  const h = Math.round(mins / 60);
+  return h < 36 ? `${h} h ago` : `${Math.round(h / 24)} d ago`;
 }
 
 function sevCol(s) {

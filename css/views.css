@@ -323,3 +323,10 @@ table.matrix td.cell:hover { outline: 2px solid var(--accent); outline-offset: -
   font-size: 9.5px; color: var(--text4); margin-top: 5px;
   padding-top: 5px; border-top: 1px solid var(--border); line-height: 1.5;
 }
+
+/* ---- active exploitation watch (KEV panel, landscape view) -------------- */
+.kev-row {
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg2);
+  padding: 10px 12px; margin-bottom: 8px;
+}
+.kev-row:last-child { margin-bottom: 0; }

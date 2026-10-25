@@ -16,6 +16,7 @@ import { createHash } from 'node:crypto';
 import { GROUPS } from './data/actors.js';
 import { BD_ADVISORIES } from './data/advisories.js';
 import { SOURCES, getFeed, cache } from './tools/feed.mjs';
+import { getKev } from './tools/kev.mjs';
 import { stixBundle } from './tools/stix.mjs';
 import { enrich } from './js/lib/enrich.js';
 
@@ -79,7 +80,7 @@ const server = http.createServer(async (req, res) => {
         corpus: { actors: GROUPS.length, advisories: BD_ADVISORIES.length,
                   confirmed_vs_bd: GROUPS.filter(g => g.bd_status === 'confirmed').length },
         feed: { cached_items: f.items.length, sources: SOURCES.length, age_s: cache.at ? Math.round((Date.now() - cache.at) / 1000) : null },
-        capabilities: { feed: true, enrich: true, taxii: true, ai: false }
+        capabilities: { feed: true, enrich: true, taxii: true, kev: true, ai: false }
       });
     }
 
@@ -93,6 +94,10 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/feed/sources') {
       const { sources } = await getFeed();
       return json(res, { sources, generated_at: new Date().toISOString() });
+    }
+
+    if (p === '/api/kev') {
+      return json(res, await getKev());
     }
 
     if (p === '/api/enrich') {
